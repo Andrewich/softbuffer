@@ -22,13 +22,15 @@ pub use error::SoftBufferError;
 
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle, RawDisplayHandle, RawWindowHandle};
 
+use std::sync::{Arc, Mutex};
+
 /// An instance of this struct contains the platform-specific data that must be managed in order to
 /// write to a window on that platform. This struct owns the window that this data corresponds to
 /// to ensure safety, as that data must be destroyed before the window itself is destroyed. You may
 /// access the underlying window via [`window`](Self::window) and [`window_mut`](Self::window_mut).
 pub struct GraphicsContext<W: HasRawWindowHandle + HasRawDisplayHandle> {
     window: W,
-    graphics_context_impl: Box<dyn GraphicsContextImpl>,
+    graphics_context_impl: Mutex<Box<dyn GraphicsContextImpl>>,
 }
 
 impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
@@ -63,7 +65,7 @@ impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
 
         Ok(Self {
             window,
-            graphics_context_impl: imple,
+            graphics_context_impl: Mutex::new(imple),
         })
     }
 
@@ -122,7 +124,7 @@ impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
         }
 
         unsafe {
-            self.graphics_context_impl.set_buffer(buffer, width, height);
+            self.graphics_context_impl.lock().unwrap().set_buffer(buffer, width, height);
         }
     }
 }
