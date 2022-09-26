@@ -30,7 +30,7 @@ use std::sync::{Arc, Mutex};
 /// access the underlying window via [`window`](Self::window) and [`window_mut`](Self::window_mut).
 pub struct GraphicsContext<W: HasRawWindowHandle + HasRawDisplayHandle> {
     window: W,
-    graphics_context_impl: Mutex<Box<dyn GraphicsContextImpl>>,
+    graphics_context_impl: Arc<Mutex<Box<dyn GraphicsContextImpl>>>,
 }
 
 impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
@@ -65,7 +65,7 @@ impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
 
         Ok(Self {
             window,
-            graphics_context_impl: Mutex::new(imple),
+            graphics_context_impl: Arc::new(Mutex::new(imple)),
         })
     }
 
