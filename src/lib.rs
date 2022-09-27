@@ -27,8 +27,9 @@ use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle, RawDisplayHandl
 /// to ensure safety, as that data must be destroyed before the window itself is destroyed. You may
 /// access the underlying window via [`window`](Self::window) and [`window_mut`](Self::window_mut).
 pub struct GraphicsContext<W: HasRawWindowHandle + HasRawDisplayHandle> {
-    window: W,
-    graphics_context_impl: Box<dyn GraphicsContextImpl>,
+    window: W,    
+    #[cfg(target_os = "windows")]
+    graphics_context: win32::Win32Context,
 }
 
 impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
@@ -40,18 +41,10 @@ impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
     pub unsafe fn new(window: W) -> Result<Self, SoftBufferError<W>> {
         let raw_window_handle = window.raw_window_handle();
         let raw_display_handle = window.raw_display_handle();
-
-        let imple: Box<dyn GraphicsContextImpl> = match (raw_window_handle, raw_display_handle) {
-            #[cfg(target_os = "linux")]
-            (RawWindowHandle::Xlib(xlib_window_handle), RawDisplayHandle::Xlib(xlib_display_handle)) => Box::new(x11::X11Impl::new(xlib_window_handle, xlib_display_handle)?),
-            #[cfg(target_os = "linux")]
-            (RawWindowHandle::Wayland(wayland_window_handle), RawDisplayHandle::Wayland(wayland_display_handle)) => Box::new(wayland::WaylandImpl::new(wayland_window_handle, wayland_display_handle)?),
+        
+        let imple = match (raw_window_handle, raw_display_handle) {            
             #[cfg(target_os = "windows")]
-            (RawWindowHandle::Win32(win32_handle), _) => Box::new(win32::Win32Impl::new(&win32_handle)?),
-            #[cfg(target_os = "macos")]
-            (RawWindowHandle::AppKit(appkit_handle), _) => Box::new(cg::CGImpl::new(appkit_handle)?),
-            #[cfg(target_arch = "wasm32")]
-            (RawWindowHandle::Web(web_handle), _) => Box::new(web::WebImpl::new(web_handle)?),
+            (RawWindowHandle::Win32(win32_handle), _) => win32::Win32Context::new(&win32_handle)?,
             (unimplemented_window_handle, unimplemented_display_handle) => return Err(SoftBufferError::UnsupportedPlatform {
                 window,
                 human_readable_window_platform_name: window_handle_type_name(&unimplemented_window_handle),
@@ -60,10 +53,11 @@ impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
                 display_handle: unimplemented_display_handle
             }),
         };
+        //let imple = win32::Win32Context::new(raw_window_handle);
 
         Ok(Self {
             window,
-            graphics_context_impl: imple,
+            graphics_context: imple,
         })
     }
 
@@ -122,7 +116,7 @@ impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
         }
 
         unsafe {
-            self.graphics_context_impl.set_buffer(buffer, width, height);
+            self.graphics_context.set_buffer(buffer, width, height);
         }
     }
 }

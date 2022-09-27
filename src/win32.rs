@@ -1,11 +1,11 @@
-use crate::{GraphicsContextImpl, SoftBufferError};
+use crate::SoftBufferError;
 use raw_window_handle::{HasRawWindowHandle, Win32WindowHandle};
 use std::os::raw::c_int;
 use winapi::shared::windef::{HDC, HWND};
 use winapi::um::wingdi::{StretchDIBits, BITMAPINFOHEADER, BI_BITFIELDS, RGBQUAD};
 use winapi::um::winuser::{GetDC, ValidateRect};
 
-pub struct Win32Impl {
+pub struct Win32Context {
     window: HWND,
     dc: HDC,
 }
@@ -18,7 +18,7 @@ struct BitmapInfo {
     pub bmi_colors: [RGBQUAD; 3],
 }
 
-impl Win32Impl {
+impl Win32Context {
     pub unsafe fn new<W: HasRawWindowHandle>(handle: &Win32WindowHandle) -> Result<Self, crate::SoftBufferError<W>> {
         let dc = GetDC(handle.hwnd as HWND);
 
@@ -33,10 +33,8 @@ impl Win32Impl {
             }
         )
     }
-}
 
-impl GraphicsContextImpl for Win32Impl {
-    unsafe fn set_buffer(&mut self, buffer: &[u32], width: u16, height: u16) {
+    pub unsafe fn set_buffer(&mut self, buffer: &[u32], width: u16, height: u16) {
         let mut bitmap_info: BitmapInfo = std::mem::zeroed();
 
         bitmap_info.bmi_header.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
