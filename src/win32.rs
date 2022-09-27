@@ -19,7 +19,7 @@ struct BitmapInfo {
 }
 
 impl Win32Context {
-    pub unsafe fn new<W: HasRawWindowHandle>(handle: &Win32WindowHandle) -> Result<Self, crate::SoftBufferError<W>> {
+    pub unsafe fn new<W: HasRawWindowHandle>(handle: &Win32WindowHandle) -> Result<Self, crate::SoftBufferError> {
         let dc = GetDC(handle.hwnd as HWND);
 
         if dc.is_null(){

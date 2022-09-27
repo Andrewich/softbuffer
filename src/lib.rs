@@ -26,27 +26,25 @@ use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle, RawDisplayHandl
 /// write to a window on that platform. This struct owns the window that this data corresponds to
 /// to ensure safety, as that data must be destroyed before the window itself is destroyed. You may
 /// access the underlying window via [`window`](Self::window) and [`window_mut`](Self::window_mut).
-pub struct GraphicsContext<W: HasRawWindowHandle + HasRawDisplayHandle> {
-    window: W,    
+pub struct GraphicsContext {    
     #[cfg(target_os = "windows")]
     graphics_context: win32::Win32Context,
 }
 
-impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
+impl GraphicsContext {
     /// Creates a new instance of this struct, consuming the given window.
     ///
     /// # Safety
     ///
     ///  - Ensure that the passed object is valid to draw a 2D buffer to
-    pub unsafe fn new(window: W) -> Result<Self, SoftBufferError<W>> {
+    pub unsafe fn new<W: HasRawWindowHandle + HasRawDisplayHandle>(window: &W) -> Result<Self, SoftBufferError> {
         let raw_window_handle = window.raw_window_handle();
         let raw_display_handle = window.raw_display_handle();
         
         let imple = match (raw_window_handle, raw_display_handle) {            
             #[cfg(target_os = "windows")]
-            (RawWindowHandle::Win32(win32_handle), _) => win32::Win32Context::new(&win32_handle)?,
-            (unimplemented_window_handle, unimplemented_display_handle) => return Err(SoftBufferError::UnsupportedPlatform {
-                window,
+            (RawWindowHandle::Win32(win32_handle), _) => win32::Win32Context::new::<W>(&win32_handle)?,
+            (unimplemented_window_handle, unimplemented_display_handle) => return Err(SoftBufferError::UnsupportedPlatform {                
                 human_readable_window_platform_name: window_handle_type_name(&unimplemented_window_handle),
                 human_readable_display_platform_name: display_handle_type_name(&unimplemented_display_handle),
                 window_handle: unimplemented_window_handle,
@@ -55,17 +53,16 @@ impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
         };
         //let imple = win32::Win32Context::new(raw_window_handle);
 
-        Ok(Self {
-            window,
+        Ok(Self {            
             graphics_context: imple,
         })
     }
 
     /// Gets shared access to the underlying window.
-    #[inline]
-    pub fn window(&self) -> &W {
-        &self.window
-    }
+    // #[inline]
+    // pub fn window(&self) -> &W {
+    //     &self.window
+    // }
 
     /// Gets mut/exclusive access to the underlying window.
     ///
@@ -81,10 +78,10 @@ impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
     ///   which this [`GraphicsContext`] was created for; and within that window, the
     ///   platform-specific configuration for 2D drawing must not have been modified. (For example,
     ///   on macOS the view hierarchy of the window must not have been modified.)
-    #[inline]
-    pub unsafe fn window_mut(&mut self) -> &mut W {
-        &mut self.window
-    }
+    // #[inline]
+    // pub unsafe fn window_mut(&mut self) -> &mut W {
+    //     &mut self.window
+    // }
 
     /// Shows the given buffer with the given width and height on the window corresponding to this
     /// graphics context. Panics if buffer.len() ≠ width*height. If the size of the buffer does
@@ -121,13 +118,13 @@ impl<W: HasRawWindowHandle + HasRawDisplayHandle> GraphicsContext<W> {
     }
 }
 
-impl<W: HasRawWindowHandle + HasRawDisplayHandle> AsRef<W> for GraphicsContext<W> {
-    /// Equivalent to [`self.window()`](Self::window()).
-    #[inline]
-    fn as_ref(&self) -> &W {
-        self.window()
-    }
-}
+// impl<W: HasRawWindowHandle + HasRawDisplayHandle> AsRef<W> for GraphicsContext<W> {
+//     /// Equivalent to [`self.window()`](Self::window()).
+//     #[inline]
+//     fn as_ref(&self) -> &W {
+//         self.window()
+//     }
+// }
 
 trait GraphicsContextImpl {
     unsafe fn set_buffer(&mut self, buffer: &[u32], width: u16, height: u16);
