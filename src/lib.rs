@@ -30,7 +30,8 @@ use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
 /// write to a window on that platform. This struct owns the window that this data corresponds to
 /// to ensure safety, as that data must be destroyed before the window itself is destroyed. You may
 /// access the underlying window via [`window`](Self::window) and [`window_mut`](Self::window_mut).
-pub struct GraphicsContext {    
+pub struct GraphicsContext {
+    buffer: Vec<u32>,  
     #[cfg(target_os = "windows")]
     graphics_context: Arc<Mutex<win32::Win32Context>>,
 }
@@ -54,9 +55,12 @@ impl GraphicsContext {
                 human_readable_window_platform_name: window_handle_type_name(&unimplemented_window_handle),                
                 window_handle: unimplemented_window_handle,                
             }),
-        };        
+        };
+        
+        let buffer = vec![0u32; 640 * 480];
 
-        Ok(Self {            
+        Ok(Self {
+            buffer,
             graphics_context: imple,
         })
     }
@@ -110,14 +114,14 @@ impl GraphicsContext {
     /// G: Green channel
     /// B: Blue channel
     #[inline]
-    pub fn set_buffer(&mut self, buffer: &[u32], width: u16, height: u16) {
-        if (width as usize) * (height as usize) != buffer.len() {
-            panic!("The size of the passed buffer is not the correct size. Its length must be exactly width*height.");
-        }
+    pub fn set_buffer(&mut self, width: u16, height: u16) {
+        //if (width as usize) * (height as usize) != buffer.len() {
+        //    panic!("The size of the passed buffer is not the correct size. Its length must be exactly width*height.");
+        //}
 
         if let Ok(mut ctx) = self.graphics_context.lock() {
             unsafe {
-                ctx.set_buffer(buffer, width, height);
+                ctx.set_buffer(&self.buffer, width, height);
             }
         }        
     }
