@@ -114,14 +114,14 @@ impl GraphicsContext {
     /// G: Green channel
     /// B: Blue channel
     #[inline]
-    pub fn set_buffer(&mut self, width: u16, height: u16) {
-        //if (width as usize) * (height as usize) != buffer.len() {
-        //    panic!("The size of the passed buffer is not the correct size. Its length must be exactly width*height.");
-        //}
+    pub fn set_buffer(&self, buffer: &[u32], width: u16, height: u16) {
+        if (width as usize) * (height as usize) != buffer.len() {
+            panic!("The size of the passed buffer is not the correct size. Its length must be exactly width*height.");
+        }
 
-        if let Ok(mut ctx) = self.graphics_context.lock() {
+        if let Ok(ctx) = self.graphics_context.lock() {
             unsafe {
-                ctx.set_buffer(&self.buffer, width, height);
+                ctx.set_buffer(&buffer, width, height);
             }
         }        
     }

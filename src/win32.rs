@@ -34,7 +34,7 @@ impl Win32Context {
         )
     }
 
-    pub unsafe fn set_buffer(&mut self, buffer: &[u32], width: u16, height: u16) {
+    pub unsafe fn set_buffer(&self, buffer: &[u32], width: u16, height: u16) {
         let mut bitmap_info: BitmapInfo = std::mem::zeroed();
 
         bitmap_info.bmi_header.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
