@@ -35,6 +35,8 @@ pub struct GraphicsContext {
     graphics_context: Arc<Mutex<win32::Win32Context>>,
 }
 
+unsafe impl Send for GraphicsContext {}
+
 impl GraphicsContext {
     /// Creates a new instance of this struct, consuming the given window.
     ///
