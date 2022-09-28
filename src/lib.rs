@@ -36,6 +36,7 @@ pub struct GraphicsContext {
 }
 
 unsafe impl Send for GraphicsContext {}
+unsafe impl Sync for GraphicsContext {}
 
 impl GraphicsContext {
     /// Creates a new instance of this struct, consuming the given window.
