@@ -1,17 +1,15 @@
 use std::error::Error;
-use raw_window_handle::{RawDisplayHandle, RawWindowHandle};
+use raw_window_handle::RawWindowHandle;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SoftBufferError {
     #[error(
-        "The provided window returned an unsupported platform: {human_readable_window_platform_name}, {human_readable_display_platform_name}."
+        "The provided window returned an unsupported platform: {human_readable_window_platform_name}."
     )]
     UnsupportedPlatform {        
-        human_readable_window_platform_name: &'static str,
-        human_readable_display_platform_name: &'static str,
-        window_handle: RawWindowHandle,
-        display_handle: RawDisplayHandle
+        human_readable_window_platform_name: &'static str,        
+        window_handle: RawWindowHandle,        
     },
     #[error("Platform error")]
     PlatformError(Option<String>, Option<Box<dyn Error>>)

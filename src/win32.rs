@@ -1,5 +1,5 @@
 use crate::SoftBufferError;
-use raw_window_handle::{HasRawWindowHandle, Win32WindowHandle};
+use raw_window_handle::{HasRawWindowHandle, Win32Handle};
 use std::os::raw::c_int;
 use winapi::shared::windef::{HDC, HWND};
 use winapi::um::wingdi::{StretchDIBits, BITMAPINFOHEADER, BI_BITFIELDS, RGBQUAD};
@@ -19,7 +19,7 @@ struct BitmapInfo {
 }
 
 impl Win32Context {
-    pub unsafe fn new<W: HasRawWindowHandle>(handle: &Win32WindowHandle) -> Result<Self, crate::SoftBufferError> {
+    pub unsafe fn new<W: HasRawWindowHandle>(handle: &Win32Handle) -> Result<Self, crate::SoftBufferError> {
         let dc = GetDC(handle.hwnd as HWND);
 
         if dc.is_null(){

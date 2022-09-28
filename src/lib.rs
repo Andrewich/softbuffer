@@ -20,7 +20,7 @@ mod error;
 
 pub use error::SoftBufferError;
 
-use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle, RawDisplayHandle, RawWindowHandle};
+use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
 
 /// An instance of this struct contains the platform-specific data that must be managed in order to
 /// write to a window on that platform. This struct owns the window that this data corresponds to
@@ -37,21 +37,17 @@ impl GraphicsContext {
     /// # Safety
     ///
     ///  - Ensure that the passed object is valid to draw a 2D buffer to
-    pub unsafe fn new<W: HasRawWindowHandle + HasRawDisplayHandle>(window: &W) -> Result<Self, SoftBufferError> {
-        let raw_window_handle = window.raw_window_handle();
-        let raw_display_handle = window.raw_display_handle();
+    pub unsafe fn new<W: HasRawWindowHandle>(window: &W) -> Result<Self, SoftBufferError> {
+        let raw_window_handle = window.raw_window_handle();        
         
-        let imple = match (raw_window_handle, raw_display_handle) {            
+        let imple = match raw_window_handle {            
             #[cfg(target_os = "windows")]
-            (RawWindowHandle::Win32(win32_handle), _) => win32::Win32Context::new::<W>(&win32_handle)?,
-            (unimplemented_window_handle, unimplemented_display_handle) => return Err(SoftBufferError::UnsupportedPlatform {                
-                human_readable_window_platform_name: window_handle_type_name(&unimplemented_window_handle),
-                human_readable_display_platform_name: display_handle_type_name(&unimplemented_display_handle),
-                window_handle: unimplemented_window_handle,
-                display_handle: unimplemented_display_handle
+            RawWindowHandle::Win32(win32_handle) => win32::Win32Context::new::<W>(&win32_handle)?,
+            unimplemented_window_handle => return Err(SoftBufferError::UnsupportedPlatform {                
+                human_readable_window_platform_name: window_handle_type_name(&unimplemented_window_handle),                
+                window_handle: unimplemented_window_handle,                
             }),
-        };
-        //let imple = win32::Win32Context::new(raw_window_handle);
+        };        
 
         Ok(Self {            
             graphics_context: imple,
@@ -141,28 +137,8 @@ fn window_handle_type_name(handle: &RawWindowHandle) -> &'static str {
         RawWindowHandle::AppKit(_) => "AppKit",
         RawWindowHandle::Orbital(_) => "Orbital",
         RawWindowHandle::UiKit(_) => "UiKit",
-        RawWindowHandle::Xcb(_) => "XCB",
-        RawWindowHandle::Drm(_) => "DRM",
-        RawWindowHandle::Gbm(_) => "GBM",
+        RawWindowHandle::Xcb(_) => "XCB",        
         RawWindowHandle::Haiku(_) => "Haiku",
-        _ => "Unknown Name", //don't completely fail to compile if there is a new raw window handle type that's added at some point
-    }
-}
-
-fn display_handle_type_name(handle: &RawDisplayHandle) -> &'static str {
-    match handle {
-        RawDisplayHandle::Xlib(_) => "Xlib",
-        RawDisplayHandle::Web(_) => "Web",
-        RawDisplayHandle::Wayland(_) => "Wayland",
-        RawDisplayHandle::AppKit(_) => "AppKit",
-        RawDisplayHandle::Orbital(_) => "Orbital",
-        RawDisplayHandle::UiKit(_) => "UiKit",
-        RawDisplayHandle::Xcb(_) => "XCB",
-        RawDisplayHandle::Drm(_) => "DRM",
-        RawDisplayHandle::Gbm(_) => "GBM",
-        RawDisplayHandle::Haiku(_) => "Haiku",
-        RawDisplayHandle::Windows(_) => "Windows",
-        RawDisplayHandle::Android(_) => "Android",
         _ => "Unknown Name", //don't completely fail to compile if there is a new raw window handle type that's added at some point
     }
 }
