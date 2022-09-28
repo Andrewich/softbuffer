@@ -20,6 +20,10 @@ mod error;
 
 pub use error::SoftBufferError;
 
+use std::{
+    sync::{Arc, Mutex},  
+};
+
 use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
 
 /// An instance of this struct contains the platform-specific data that must be managed in order to
@@ -28,7 +32,7 @@ use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
 /// access the underlying window via [`window`](Self::window) and [`window_mut`](Self::window_mut).
 pub struct GraphicsContext {    
     #[cfg(target_os = "windows")]
-    graphics_context: win32::Win32Context,
+    graphics_context: Arc<Mutex<win32::Win32Context>>,
 }
 
 impl GraphicsContext {
@@ -42,7 +46,7 @@ impl GraphicsContext {
         
         let imple = match raw_window_handle {            
             #[cfg(target_os = "windows")]
-            RawWindowHandle::Win32(win32_handle) => win32::Win32Context::new::<W>(&win32_handle)?,
+            RawWindowHandle::Win32(win32_handle) => Arc::new(Mutex::new(win32::Win32Context::new::<W>(&win32_handle)?)),
             unimplemented_window_handle => return Err(SoftBufferError::UnsupportedPlatform {                
                 human_readable_window_platform_name: window_handle_type_name(&unimplemented_window_handle),                
                 window_handle: unimplemented_window_handle,                
@@ -108,9 +112,11 @@ impl GraphicsContext {
             panic!("The size of the passed buffer is not the correct size. Its length must be exactly width*height.");
         }
 
-        unsafe {
-            self.graphics_context.set_buffer(buffer, width, height);
-        }
+        if let Ok(mut ctx) = self.graphics_context.lock() {
+            unsafe {
+                ctx.set_buffer(buffer, width, height);
+            }
+        }        
     }
 }
 
